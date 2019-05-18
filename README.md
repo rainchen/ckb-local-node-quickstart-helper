@@ -12,7 +12,9 @@
 
 Run above commands in different Terminal windows.
 
-Run `make watch-local-node-info` to watch node & wallet info
+Run `make watch-local-node-info` to watch node & wallet info, you should see:
+
+![](https://user-images.githubusercontent.com/71397/57970324-88562f80-79b2-11e9-9684-beaf15126c3d.png)
 
 ## Style B: Step by Step
 
