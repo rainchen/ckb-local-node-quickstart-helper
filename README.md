@@ -1,5 +1,9 @@
 # CKB quick start to run a local node & minder
 
+## Install dependencies
+
+`make install`
+
 ## Steps
 
 1. make generate-wallet-prikey
