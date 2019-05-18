@@ -4,7 +4,17 @@
 
 `make install`
 
-## Steps
+## Style A: Quick Start Steps
+
+1. `make step-1`: generate wallet prikey & setup local_node
+2. `make step-2`: setup local_miner & restart local_node
+3. `make step-3`: start local_miner
+
+Run above commands in different Terminal windows.
+
+Run `make watch-local-node-info` to watch node & wallet info
+
+## Style B: Step by Step
 
 1. make generate-wallet-prikey
 2. make setup-local-node or setup-local-node-with-bootnodes

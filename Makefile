@@ -58,6 +58,22 @@ export CKB_TESTNET_NODE_RPC_URL=1.2.3.4:8114
 install: ## insall
 	bundle install
 
+##@ Quip Start
+step-1: ## generate wallet prikey & setup local_node
+	$(MAKE) generate-wallet-prikey
+	$(MAKE) setup-local-node
+	$(MAKE) start-local-node
+
+step-2: ## setup local_miner & restart local_node
+	$(MAKE) setup-local-miner
+	@echo "restart local_node"
+	@docker stop my_local_ckb_node
+	$(MAKE) start-local-node
+
+step-3: ## start local_miner
+	@echo "run [make watch-local-node-info] (in a new window) to watch node & wallet info"
+	$(MAKE) start-local-miner
+
 ##@ Debug Helpers
 
 ckb-bin-help: ## show help for ckb
@@ -84,7 +100,7 @@ console: ## enter a Bash console, support CKB_DOCKER_IMAGE_TAG_NAME env
 generate-wallet-prikey: ## step 1. generate a new wallet private key
 	@echo [generate_wallet_prikey] to $${CKB_WALLET_PRIKEY_FILE}
 	@if [ -e $${CKB_WALLET_PRIKEY_FILE} ]; then \
-	  echo "${CKB_WALLET_PRIKEY_FILE} exists" && exit 1 ;\
+	  echo "${CKB_WALLET_PRIKEY_FILE} exists" ;\
 	else \
 	  $(call generate_wallet_prikey) > $${CKB_WALLET_PRIKEY_FILE} ;\
 	  echo "prikey saved to $${CKB_WALLET_PRIKEY_FILE}" ;\
