@@ -254,6 +254,7 @@ make local-miner-healthy:
 	@make miner-cpu-temp
 
 miner-cpu-temp: ## get CPU temperature
+	@[ -x "$$(command -v istats)" ] || gem install iStats
 	@istats | grep -E "CPU temp"	
 
 ##@ Helpers
