@@ -39,15 +39,32 @@ WARN_STRING  = "[WARNING]"
 
 # DEFINE FUNCTIONS
 
-# genreate a random 64 bytes hex string, e.g.: "0xa587fcf397..."
+# genreate a random key pair which PrivKey is 64 bytes hex string, e.g.: 
+# PrivKey: 799f46e9be....
+# PubKey: 04d1950e3d069cb2c....
 define generate_wallet_prikey
-    openssl rand -hex 32 | sed -e 's/^/0x/'
+	openssl ecparam -genkey -name secp256k1 -text -noout -outform DER | \
+		xxd -p -c 1000 | \
+		sed 's/41534e31204f49443a20736563703235366b310a30740201010420/PrivKey: /' | \
+		sed 's/a00706052b8104000aa144034200/\'$$'\nPubKey: /'
+endef
+
+define get_wallet_pubkey
+	cat $${CKB_WALLET_PRIKEY_FILE} | grep PubKey | cut -d ' ' -f 2
+endef
+
+define get_wallet_prikey
+	cat $${CKB_WALLET_PRIKEY_FILE} | grep PrivKey | cut -d ' ' -f 2
+endef
+
+define run_ckb_bin
+	docker run --rm -it $${CKB_DOCKER_IMAGE_NAME} $(1)
 endef
 
 # DEFINE GLOBAL VARIABLES
-# export CKB_DOCKER_IMAGE_NAME=nervos/ckb:rylai30
-export CKB_DOCKER_IMAGE_NAME=nervos/ckb:v0.12.0
-export CKB_WALLET_PRIKEY_FILE=wallet_prikey
+export CKB_DOCKER_IMAGE_NAME=nervos/ckb:v0.13.0
+export CKB_WALLET_DIR=mywallet
+export CKB_WALLET_PRIKEY_FILE=${CKB_WALLET_DIR}/wallet_prikey
 export CKB_LOCAL_NODE_DOCKER_CONTAINER_NAME=my_local_ckb_node
 export CKB_TESTNET_NODE_RPC_URL=1.2.3.4:8114
 
@@ -60,6 +77,7 @@ install: ## insall
 
 ##@ Quip Start
 step-1: ## generate wallet prikey & setup local_node
+	$(MAKE) install
 	$(MAKE) generate-wallet-prikey
 	$(MAKE) setup-local-node
 	$(MAKE) start-local-node
@@ -77,10 +95,10 @@ step-3: ## start local_miner
 ##@ Debug Helpers
 
 ckb-bin-help: ## show help for ckb
-	@docker run --rm -it $${CKB_DOCKER_IMAGE_NAME} --help
+	$(call run_ckb_bin, --help)
 
 ckb-bin-version: ## check ckb in version, e.g.: ckb 0.12.0-pre (rylai30-dirty 2019-05-16)
-	@docker run --rm -it $${CKB_DOCKER_IMAGE_NAME} --version
+	$(call run_ckb_bin, --version)
 
 console: ## enter a Bash console, support CKB_DOCKER_IMAGE_TAG_NAME env
 	@echo "[console] enter a Bash console of container"
@@ -99,6 +117,7 @@ console: ## enter a Bash console, support CKB_DOCKER_IMAGE_TAG_NAME env
 
 generate-wallet-prikey: ## step 1. generate a new wallet private key
 	@echo [generate_wallet_prikey] to $${CKB_WALLET_PRIKEY_FILE}
+	mkdir -p $${CKB_WALLET_DIR}
 	@if [ -e $${CKB_WALLET_PRIKEY_FILE} ]; then \
 	  echo "${CKB_WALLET_PRIKEY_FILE} exists" ;\
 	else \
@@ -112,7 +131,7 @@ setup-local-node: ## step 2. setup-local-node: create a local_node config dir
 		ckb --version ;\
 		echo 'init ckb-testnet node and miner config' ;\
 		test -e ckb-testnet || ckb init -C ckb-testnet --spec testnet ;\
-		echo 'created ckb-test/ dir' ;\
+		echo 'created ckb-testnet/ dir' ;\
 		sed -i "s/127.0.0.1:8114/0.0.0.0:8114/" ckb-testnet/ckb.toml ;\
 		echo 'next step: run [make start-local-node] to start node' ;\
 		echo 'then run [make setup-local-miner] in a new window to setup [block_assembler] in ckb-testnet/ckb.toml' ;\
@@ -145,17 +164,23 @@ start-local-node-console: ## debug: enter local_node console
 	@echo [local_node] start a node that can join testnet 
 	docker exec -it $${CKB_LOCAL_NODE_DOCKER_CONTAINER_NAME} bash
 
+get-block-assembler-config: ## ckb cli secp256k1-lock <pubkey>
+	@eval pubkey=`$(get_wallet_pubkey)` ;\
+		echo "# block_assembler config for pubkey: $${pubkey}" ;\
+		$(call run_ckb_bin, cli secp256k1-lock $${pubkey})
+
 setup-local-miner: ## step 4. setup-local-miner: setup local miner config
 	@echo setup-local-miner
-	# if not exists block_assembler.toml then genereate using "wallet_helper.rb get_block_assembler_config"
+	# if not exists block_assembler.toml then genereate using "make get-block-assembler-config"
 	#   and replace it in ckb-testnet/ckb.toml
-	@ruby wallet_helper.rb get_block_assembler_config > block_assembler.toml ;\
+	@$(MAKE) get-block-assembler-config > $${CKB_WALLET_DIR}/block_assembler.toml ;\
 	 	ckb_toml=ckb-testnet/ckb.toml ;\
-			_args='$(shell cat block_assembler.toml | grep args)' ;\
-				sed -i -e "s/^args =.*/$${_args}/" $${ckb_toml} ;\
-			_code_hash='$(shell cat block_assembler.toml | grep code_hash)' ;\
-				sed -i -e "s/^code_hash =.*/$${_code_hash}/" $${ckb_toml} ;\
-		echo "Done! check block_assembler.toml for sure." ;\
+		 	sed -i -e "s/^# \[block_assembler\]/[block_assembler]/" $${ckb_toml} ;\
+			_args=`cat ${CKB_WALLET_DIR}/block_assembler.toml | grep "^args"` ;\
+				sed -i -e "s/^# args =.*/$${_args}/" $${ckb_toml} ;\
+			_code_hash=`cat ${CKB_WALLET_DIR}/block_assembler.toml | grep code_hash` ;\
+				sed -i -e "s/^# code_hash =.*/$${_code_hash}/" $${ckb_toml} ;\
+		echo "Done! check $${CKB_WALLET_DIR}/block_assembler.toml for sure." ;\
 		echo "Next step: restart local_node [make start-local-node]" ;\
 		echo "     then: start local_miner [make start-local-miner] in new window" ;\
 		echo "     then: watch local_node [make watch-local-node-info] in new window"

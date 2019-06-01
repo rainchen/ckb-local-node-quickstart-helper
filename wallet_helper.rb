@@ -3,7 +3,8 @@
 require "bundler/setup"
 require "ckb"
 
-privkey = File.read("wallet_prikey").strip
+privkey = File.read("mywallet/wallet_prikey").strip
+privkey = "0x" + privkey.match(/PrivKey: (.*)/)[1]
 api_url = "http://127.0.0.1:8114"
 api = CKB::API.new(host: api_url)
 wallet = CKB::Wallet.from_hex(api, privkey)
