@@ -76,20 +76,28 @@ install: ## insall
 	bundle install
 
 ##@ Quip Start
+
+start: ## start all steps
+	make step-1
+	make step-2
+	make step-3
+
 step-1: ## generate wallet prikey & setup local_node
 	$(MAKE) install
 	$(MAKE) generate-wallet-prikey
+	$(MAKE) stop-local-node
 	$(MAKE) setup-local-node
-	$(MAKE) start-local-node
+	$(MAKE) start-local-node DETACHED=true
 
 step-2: ## setup local_miner & restart local_node
 	$(MAKE) setup-local-miner
 	@echo "restart local_node"
-	@docker stop my_local_ckb_node
-	$(MAKE) start-local-node
+	$(MAKE) stop-local-node
+	$(MAKE) start-local-node DETACHED=true
 
 step-3: ## start local_miner
 	@echo "run [make watch-local-node-info] (in a new window) to watch node & wallet info"
+	$(MAKE) check-local-miner-wallet-info
 	$(MAKE) start-local-miner
 
 ##@ Debug Helpers
@@ -150,15 +158,18 @@ setup-local-node-with-bootnodes: ## step 2. setup a local_node with bootnodes.to
 		echo 'done' ;\
 	"
 
-start-local-node: ## step 3. start-local-node: start local_node
+start-local-node: ## step 3. start-local-node: start local_node, allowing passing DETACHED=true to run container in the background
 	@echo [local_node] start a node that can join testnet 
-	@docker run -p 8114:8114 -p 8115:8115 --rm -it -w=/home/ckb -v $${PWD}:/home/ckb/ --entrypoint "/bin/bash" --name=$${CKB_LOCAL_NODE_DOCKER_CONTAINER_NAME} $${CKB_DOCKER_IMAGE_NAME} -c " \
+	@docker run -d=$${DETACHED:=false} -p 8114:8114 -p 8115:8115 --rm -it -w=/home/ckb -v $${PWD}:/home/ckb/ --entrypoint "/bin/bash" --name=$${CKB_LOCAL_NODE_DOCKER_CONTAINER_NAME} $${CKB_DOCKER_IMAGE_NAME} -c " \
 		ckb --version ;\
 		echo 'start node' ;\
 		cd ckb-testnet ;\
 		pwd ;\
 		ckb run ;\
 	"
+
+stop-local-node: ## stop started local_node
+	docker ps -q -f name=$${CKB_LOCAL_NODE_DOCKER_CONTAINER_NAME} | xargs -I @ docker stop @
 
 start-local-node-console: ## debug: enter local_node console
 	@echo [local_node] start a node that can join testnet 
@@ -236,7 +247,7 @@ get-local-node-info: ## get local_node genesis-block-hash,latest-block-number,lo
 	@# @make get-testnet-node-latest-block-number
 
 	@echo
-	@make local-miner-healthy
+	@@[ -x "$$(command -v istats)" ] && make local-miner-healthy
 
 ##@ testnet_node
 

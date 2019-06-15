@@ -1,0 +1,29 @@
+stages:
+  - setup
+  - check
+
+# os config
+sudo: false
+
+# language config
+language: ruby
+
+# cache:
+#   directories:
+#     - mywallet
+#     - ckb-testnet
+
+# install dependencies
+install: make install
+
+jobs:
+  include:
+    - stage: setup
+      script:
+        - make step-1
+        - make step-2
+        - make step-3
+    - stage: check
+      script:
+        - make ckb-bin-version
+        - make get-local-node-info
