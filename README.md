@@ -4,17 +4,28 @@
 
 `make install`
 
-## Style A: Quick Start Steps
+## Style A: One Steps
 
-1. `make step-1`: generate wallet prikey & setup local_node
-2. `make step-2`: setup local_miner & restart local_node
-3. `make step-3`: start local_miner
+```
+make start
+```
 
-Run above commands in different Terminal windows.
+Done!
+
+You should see `[local_miner]start a miner that can join testnet` if everything works fine.
 
 Run `make watch-local-node-info` to watch node & wallet info, you should see:
 
 ![](https://user-images.githubusercontent.com/71397/57970324-88562f80-79b2-11e9-9684-beaf15126c3d.png)
+
+
+### Details:
+
+`make start` equals to:
+
+1. `make step-1`: generate wallet prikey & setup local_node
+2. `make step-2`: setup local_miner & restart local_node
+3. `make step-3`: start local_miner
 
 ## Style B: Step by Step
 
