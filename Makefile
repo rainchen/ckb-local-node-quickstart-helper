@@ -188,7 +188,8 @@ setup-local-miner: ## step 4. setup-local-miner: setup local miner config
 	 	ckb_toml=ckb-testnet/ckb.toml ;\
 		 	sed -i -e "s/^# \[block_assembler\]/[block_assembler]/" $${ckb_toml} ;\
 			_args=`cat ${CKB_WALLET_DIR}/block_assembler.toml | grep "^args"` ;\
-				sed -i -e "s/^# args =.*/$${_args}/" $${ckb_toml} ;\
+				sed -i -e "s/args =.*/$${_args}/" $${ckb_toml} ;\
+				sed -i -e "s/^# args/args/" $${ckb_toml} ;\
 			_code_hash=`cat ${CKB_WALLET_DIR}/block_assembler.toml | grep code_hash` ;\
 				sed -i -e "s/^# code_hash =.*/$${_code_hash}/" $${ckb_toml} ;\
 		echo "Done! check $${CKB_WALLET_DIR}/block_assembler.toml for sure." ;\
