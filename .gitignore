@@ -1,0 +1,5 @@
+
+tmp/
+mainnet/ckb.toml
+mainnet/ckb-mainnet-node/
+testnet/ckb-testnet
