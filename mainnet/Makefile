@@ -79,7 +79,7 @@ init-local-node: ## init local node for mainnet
 	@docker run --rm -it -v $${PWD}/$${CKB_LOCAL_NODE_DIR}:/var/lib/ckb nervos/ckb:$${CKB_BIN_VERSION} init --chain mainnet --force
 	
 	@echo "3) Create a container ckb-mainnet-node to run a node:"
-	@if [ `docker ps -a -q -f name=$${CKB_LOCAL_NODE_DOCKER_CONTAINER_NAME}` == "" ]; then \
+	@if [ "`docker ps -a -q -f name=$${CKB_LOCAL_NODE_DOCKER_CONTAINER_NAME}`" == "" ]; then \
 		docker create -p 8114:8114 -p 8115:8115 -it -v $${PWD}/$${CKB_LOCAL_NODE_DIR}:/var/lib/ckb --name ${CKB_LOCAL_NODE_DOCKER_CONTAINER_NAME} nervos/ckb:$${CKB_BIN_VERSION} run ;\
 		echo "4) Copy the generated config files from the container:" ;\
 		docker cp $${CKB_LOCAL_NODE_DOCKER_CONTAINER_NAME}:/var/lib/ckb/ckb.toml . ;\
