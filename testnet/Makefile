@@ -1,3 +1,5 @@
+# Makefile for testnet
+
 .DEFAULT_GOAL:=help
 SHELL = /bin/sh
 
@@ -63,7 +65,7 @@ endef
 
 # DEFINE GLOBAL VARIABLES
 # get available tags from https://hub.docker.com/r/nervos/ckb/tags
-export CKB_DOCKER_IMAGE_NAME=nervos/ckb:v0.14.0
+export CKB_DOCKER_IMAGE_NAME=nervos/ckb:v0.16.0
 export CKB_WALLET_DIR=mywallet
 export CKB_WALLET_PRIKEY_FILE=${CKB_WALLET_DIR}/wallet_prikey
 export CKB_LOCAL_NODE_DOCKER_CONTAINER_NAME=my_local_ckb_node
